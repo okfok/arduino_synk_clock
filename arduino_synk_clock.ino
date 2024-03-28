@@ -1,6 +1,8 @@
-#include <TimeLib.h>
+// RTC demo for ESP32, that includes TZ and DST adjustments
+// Get the POSIX style TZ format string from  https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+
 #include <WiFi.h>
-#include <WiFiUdp.h>
+#include "time.h"
 #include <ESP32Lib.h>
 #include <Ressources/Font6x8.h>
 #include <Ressources/CodePage437_8x16.h>
@@ -18,14 +20,62 @@ char month_name[12][4] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug
 
 WiFiUDP Udp;
 
-time_t getNtpTime();
-void clockDisplaySerial();
-void clockDisplayVGA();
-void printDigits(int digits);
-void printDigitsVGA(int digits);
-void sendNTPpacket(IPAddress &address);
+
+// void clockDisplaySerial();
+// void clockDisplayVGA();
+// void printDigits(int digits);
+// void printDigitsVGA(int digits);
+// time_t getNtpTime();
+// void sendNTPpacket(IPAddress &address);
 
 VGA3Bit vga;
+
+
+void setTimezone(String timezone){
+  Serial.printf("  Setting Timezone to %s\n",timezone.c_str());
+  setenv("TZ",timezone.c_str(),1);  //  Now adjust the TZ.  Clock settings are adjusted to show the new local time
+  tzset();
+}
+
+void initTime(String timezone){
+  struct tm timeinfo;
+
+  Serial.println("Setting up time");
+  configTime(0, 0, ntpServerName);    // First connect to NTP server, with 0 TZ offset
+  if(!getLocalTime(&timeinfo)){
+    Serial.println("  Failed to obtain time");
+    return;
+  }
+  Serial.println("  Got the time from NTP");
+  // Now we can set the real timezone
+  setTimezone(timezone);
+}
+
+void printLocalTime(){
+  struct tm timeinfo;
+  if(!getLocalTime(&timeinfo)){
+    Serial.println("Failed to obtain time 1");
+    return;
+  }
+  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S zone %Z %z ");
+}
+
+
+void setTime(int yr, int month, int mday, int hr, int minute, int sec, int isDst){
+  struct tm tm;
+
+  tm.tm_year = yr - 1900;   // Set date
+  tm.tm_mon = month-1;
+  tm.tm_mday = mday;
+  tm.tm_hour = hr;      // Set time
+  tm.tm_min = minute;
+  tm.tm_sec = sec;
+  tm.tm_isdst = isDst;  // 1 or 0
+  time_t t = mktime(&tm);
+  Serial.printf("Setting time: %s", asctime(&tm));
+  struct timeval now = { .tv_sec = t };
+  settimeofday(&now, NULL);
+}
 
 void setup() {
   Serial.begin(115200);
@@ -56,25 +106,29 @@ void setup() {
   Serial.println("Starting UDP");
   Udp.begin(localPort);
 
-  Serial.println("waiting for sync");
-  setSyncProvider(getNtpTime);
-  setSyncInterval(synkInterval);
+  // Serial.println("waiting for sync");
+  // setSyncProvider(getNtpTime);
+  // setSyncInterval(synkInterval);
+
+  initTime("EET-2EEST,M3.5.0/3,M10.5.0/4");   // Set for Europe/Kiev
 }
 
 time_t prevDisplay = 0;
 
 void loop() {
-  if (timeStatus() != timeNotSet) {
-    if (now() != prevDisplay) {
-      prevDisplay = now();
-      clockDisplaySerial();
-      clockDisplayVGA();
-    }
-  }
+  // if (timeStatus() != timeNotSet) {
+  //   if (now() != prevDisplay) {
+  //     prevDisplay = now();
+  //     clockDisplaySerial();
+  //     clockDisplayVGA();
+  //   }
+  // }
 
   delay(500);
+  
+  printLocalTime();
 }
-
+/*
 void clockDisplaySerial() {
   Serial.print(hour());
   printDigits(minute());
@@ -119,7 +173,8 @@ void printDigitsVGA(int digits) {
   vga.print(digits);
 }
 
-/*-------- NTP code ----------*/
+//-------- NTP code ----------
+
 
 const int NTP_PACKET_SIZE = 48;      // NTP time is in the first 48 bytes of message
 byte packetBuffer[NTP_PACKET_SIZE];  //buffer to hold incoming & outgoing packets
@@ -176,3 +231,5 @@ void sendNTPpacket(IPAddress &address) {
   Udp.write(packetBuffer, NTP_PACKET_SIZE);
   Udp.endPacket();
 }
+
+*/
