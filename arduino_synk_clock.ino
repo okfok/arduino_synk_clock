@@ -6,7 +6,7 @@
 #include <ESP32Lib.h>
 // #include <Ressources/Font6x8.h>
 #include <Ressources/CodePage437_8x16.h>
-// #include <Ressources/CodePage437_9x16.h>
+// #include "font_scripts/CodePage437_40x80.h"
 #include "config.h"
 
 const int redPin = 19;
@@ -16,7 +16,9 @@ const int hsyncPin = 5;
 const int vsyncPin = 0;
 
 
-char month_name[12][4] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+const int scale = 1;
+
+// char month_name[12][4] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
 void clockDisplayVGA(struct tm timeinfo);
 void printDigitsVGA(int digits);
@@ -33,18 +35,22 @@ void printLocalTimeVGA(struct tm timeinfo){
   char date[7];
   strftime(date, 7, "%d %B", &timeinfo);
 
-  // Serial.println((int)time[8]);
-  // Serial.println((int)date[6]);
-
   date[6] = 0;
 
-  vga.clear();
-  vga.setCursor(5, 30);
 
+  vga.clear();
+
+
+  vga.setFont(CodePage437_8x16);
+
+  
+  vga.setCursor(13 * scale, 15 * scale);
+  vga.print(date);
+
+  vga.setCursor(5 * scale, 30 * scale);
   vga.print(time);
 
-  vga.setCursor(13, 15);
-  vga.print(date);
+
 
   vga.show();
 
@@ -72,12 +78,11 @@ void setup() {
 
   // VGA
   vga.setFrameBufferCount(2);
-  Mode myMode = vga.MODE320x240.custom(80, 60);
-  // Mode myMode = vga.MODE320x240.custom(120, 90);
+  // Mode myMode = vga.MODE320x240.custom(80, 60);
+  Mode myMode = vga.MODE320x240.custom(80 * scale, 60 * scale);
 
   vga.init(myMode, redPin, greenPin, bluePin, hsyncPin, vsyncPin);
 
-  vga.setFont(CodePage437_8x16);
   vga.backColor = vga.RGB(0);
 
   // Wifi
@@ -129,28 +134,3 @@ void loop() {
   delay(500);
   
 }
-
-// void clockDisplayVGA(struct tm timeinfo) {
-//   vga.clear();
-//   vga.setCursor(5, 30);
-
-//   printDigitsVGA(timeinfo.tm_hour);
-//   vga.print(':');
-//   printDigitsVGA(timeinfo.tm_min);
-//   vga.print(':');
-//   printDigitsVGA(timeinfo.tm_sec);
-
-//   vga.setCursor(13, 15);
-//   printDigitsVGA(timeinfo.tm_mday);
-//   vga.print(" ");
-//   vga.print(month_name[timeinfo.tm_mon - 1]);
-
-//   vga.show();
-// }
-
-
-// void printDigitsVGA(int digits) {
-//   if (digits < 10)
-//     vga.print('0');
-//   vga.print(digits);
-// }
