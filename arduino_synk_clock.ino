@@ -2,6 +2,7 @@
 // Get the POSIX style TZ format string from  https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
 
 #include <WiFi.h>
+#include "esp_sntp.h"
 // #include "time.h"
 #include <ESP32Lib.h>
 // #include <Ressources/Font6x8.h>
@@ -20,13 +21,11 @@ const int scale = 1;
 
 // char month_name[12][4] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
-void clockDisplayVGA(struct tm timeinfo);
-void printDigitsVGA(int digits);
-
 VGA3Bit vga;
 
 void printLocalTime(struct tm timeinfo){
   Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S zone %Z %z ");
+  // Serial.println(sntp_get_sync_status());
 }
 
 void printLocalTimeVGA(struct tm timeinfo){
@@ -72,6 +71,10 @@ void setTime(int yr, int month, int mday, int hr, int minute, int sec, int isDst
   settimeofday(&now, NULL);
 }
 
+void call(timeval*){
+  Serial.print("CAlled");
+}
+
 void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
@@ -105,7 +108,7 @@ void setup() {
   configTime(0, 0, ntpServerName);    // First connect to NTP server, with 0 TZ offset
   if(!getLocalTime(&timeinfo)){
     Serial.println("  Failed to obtain time");
-    return;
+    // return;
   }
 
   Serial.println("  Got the time from NTP");
@@ -118,6 +121,20 @@ void setup() {
   // setSyncProvider(getNtpTime);
   // setSyncInterval(synkInterval);
 
+  sntp_set_sync_interval(synkInterval * 1000);
+  // sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
+  // esp_sntp_setservername(0, ntpServerName);
+
+  // Serial.print("Enabled: ");
+  // Serial.println(esp_sntp_enabled());
+
+  // esp_sntp_init();
+
+  Serial.print("Restart: ");
+  Serial.println(sntp_restart());
+
+  // setTime(2024, 3, 31, 8, 0, 0, 0); 
+  
 }
 
 
