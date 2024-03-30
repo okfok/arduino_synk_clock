@@ -24,21 +24,20 @@ void printDigitsVGA(int digits);
 VGA3Bit vga;
 
 void printLocalTime(struct tm timeinfo){
-  if(!getLocalTime(&timeinfo)){
-    Serial.println("Failed to obtain time!");
-    return;
-  }
   Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S zone %Z %z ");
 }
 
 void printLocalTimeVGA(struct tm timeinfo){
-  Serial.println("Time variables");
-  char time[8];
-  strftime(time, 8, "%H:%M:%S", &timeinfo);
-  char date[6];
-  strftime(date, 6, "%d %B", &timeinfo);
+  char time[9];
+  strftime(time, 9, "%H:%M:%S", &timeinfo);
+  char date[7];
+  strftime(date, 7, "%d %B", &timeinfo);
 
-  
+  // Serial.println((int)time[8]);
+  // Serial.println((int)date[6]);
+
+  date[6] = 0;
+
   vga.clear();
   vga.setCursor(5, 30);
 
@@ -74,6 +73,7 @@ void setup() {
   // VGA
   vga.setFrameBufferCount(2);
   Mode myMode = vga.MODE320x240.custom(80, 60);
+  // Mode myMode = vga.MODE320x240.custom(120, 90);
 
   vga.init(myMode, redPin, greenPin, bluePin, hsyncPin, vsyncPin);
 
@@ -120,7 +120,8 @@ void loop() {
   struct tm timeinfo;
   if (getLocalTime(&timeinfo)) {
       printLocalTime(timeinfo);
-      clockDisplayVGA(timeinfo);
+      printLocalTimeVGA(timeinfo);
+      // clockDisplayVGA(timeinfo);
   } else {
     Serial.println("Failed to obtain time!");
   }
@@ -129,27 +130,27 @@ void loop() {
   
 }
 
-void clockDisplayVGA(struct tm timeinfo) {
-  vga.clear();
-  vga.setCursor(5, 30);
+// void clockDisplayVGA(struct tm timeinfo) {
+//   vga.clear();
+//   vga.setCursor(5, 30);
 
-  printDigitsVGA(timeinfo.tm_hour);
-  vga.print(':');
-  printDigitsVGA(timeinfo.tm_min);
-  vga.print(':');
-  printDigitsVGA(timeinfo.tm_sec);
+//   printDigitsVGA(timeinfo.tm_hour);
+//   vga.print(':');
+//   printDigitsVGA(timeinfo.tm_min);
+//   vga.print(':');
+//   printDigitsVGA(timeinfo.tm_sec);
 
-  vga.setCursor(13, 15);
-  printDigitsVGA(timeinfo.tm_mday);
-  vga.print(" ");
-  vga.print(month_name[timeinfo.tm_mon - 1]);
+//   vga.setCursor(13, 15);
+//   printDigitsVGA(timeinfo.tm_mday);
+//   vga.print(" ");
+//   vga.print(month_name[timeinfo.tm_mon - 1]);
 
-  vga.show();
-}
+//   vga.show();
+// }
 
 
-void printDigitsVGA(int digits) {
-  if (digits < 10)
-    vga.print('0');
-  vga.print(digits);
-}
+// void printDigitsVGA(int digits) {
+//   if (digits < 10)
+//     vga.print('0');
+//   vga.print(digits);
+// }
